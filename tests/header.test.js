@@ -18,8 +18,14 @@ afterEach(async () => {
     await browser.close();
 });
 
-test('Checking the logo', async () => {
+test('The header has the correct text', async () => {
     const text = await page.$eval('a.brand-logo', el => el.innerHTML);
 
     expect(text).toEqual("Blogster");
+});
+
+test('Clicking login should start Oauth flow', async () => {
+    await page.click('ul.right a');
+    const currentUrl = await page.url();
+    expect(currentUrl).toMatch(/accounts\.google\.com/); // make sure to escape the "."
 });
