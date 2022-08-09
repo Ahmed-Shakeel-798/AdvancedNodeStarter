@@ -29,3 +29,32 @@ test('Clicking login should start Oauth flow', async () => {
     const currentUrl = await page.url();
     expect(currentUrl).toMatch(/accounts\.google\.com/); // make sure to escape the "."
 });
+
+test('After Signing in, logout is displayed', async () => {
+    const id = '62cbf2d053785c0f517f934d'; //test user's id
+
+    // First we create a sessionString from sessionObject
+    const Buffer = require('safe-buffer').Buffer;
+    const sessionObject = {
+        passport: {
+            user: id
+        }
+    };
+    const sessionString = Buffer.from(JSON.stringify(sessionObject)).toString('base64');
+
+    // Now generate signature for the sessionString
+    const Keygrip = require('keygrip');
+    const { cookieKey } = require('../config/keys');
+    const keygrip = new Keygrip([cookieKey]);
+    const sig = keygrip.sign('session='+sessionString);
+
+    await page.setCookie({name: 'session', value: sessionString});
+    await page.setCookie({name: 'session.sig', value: sig});
+
+    await page.goto('localhost:3000');
+
+    await page.waitFor('.right > li:nth-child(2) > a:nth-child(1)');
+
+    const text = await page.$eval('.right > li:nth-child(2) > a:nth-child(1)', el => el.innerHTML);
+    expect(text).toEqual("Logout");
+});
